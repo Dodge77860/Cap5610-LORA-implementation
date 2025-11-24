@@ -16,7 +16,7 @@ from FullLoRA import FullLoRALinear
 # -----------------------------
 # Helper function to replace Linear layers in attention
 # -----------------------------
-def replace_with_lora(model, lora_type="partial", rank=4, alpha=1.0, dropout=0.0):
+def replace_with_lora(model, lora_type="partial", *, rank=4, alpha=1.0, dropout=0.0):
     """
     Replace attention projection Linear layers with LoRA modules.
 
@@ -31,30 +31,30 @@ def replace_with_lora(model, lora_type="partial", rank=4, alpha=1.0, dropout=0.0
         for child_name, child in module.named_children():
             full_name = f"{name}.{child_name}" if name else child_name
 
-            # Target query, key, value projections
+            # Target query, value projections
             if isinstance(child, nn.Linear) and any(k in full_name.lower() for k in ["q", "v"]):
-                in_features = child.in_features
-                out_features = child.out_features
-
                 if lora_type == "partial":
-                    lora_layer = PartialLoRALinear(in_features, out_features, rank=rank)
+                    # PartialLoRALinear expects the original Linear layer
+                    lora_layer = PartialLoRALinear(child, rank=rank)
                 elif lora_type == "full":
-                    lora_layer = FullLoRALinear(in_features, out_features, rank=rank, alpha=alpha, dropout=dropout)
+                    # FullLoRALinear freezes original weight and bias inside constructor
+                    lora_layer = FullLoRALinear(child, rank=rank, alpha=alpha, dropout=dropout)
                 else:
                     raise ValueError("lora_type must be 'partial' or 'full'")
 
-                # Copy original weights
-                lora_layer.weight.data.copy_(child.weight.data)
-                if hasattr(child, "bias") and child.bias is not None:
-                    lora_layer.bias = nn.Parameter(child.bias.data.clone())
+                # **Do not manually copy weight or bias** here
+                # The LoRA classes handle freezing and copying internally
+
+                # Replace the original Linear layer with the LoRA layer
                 setattr(module, child_name, lora_layer)
 
     return model
 
+
 # -----------------------------
 # Factory function to get a small model
 # -----------------------------
-def get_model(lora_type=None, rank=4, alpha=1.0, dropout=0.0):
+def get_model(lora_type=None, *, rank=4, alpha=1.0, dropout=0.0):
     """
     Load a small transformer model and optionally add LoRA layers.
 
@@ -65,6 +65,21 @@ def get_model(lora_type=None, rank=4, alpha=1.0, dropout=0.0):
     model = DistilBertModel(config)
 
     if lora_type:
+        # Freeze all parameters of the base model before replacing with LoRA layers
+        for param in model.parameters():
+            param.requires_grad = False
+
+        # DEBUG: Verify trainable parameters after freezing
+        debug_trainable_params_after_freeze = sum(p.numel() for p in model.parameters() if p.requires_grad)
+        print(f"DEBUG: Trainable parameters after initial freeze: {debug_trainable_params_after_freeze}")
+
         model = replace_with_lora(model, lora_type=lora_type, rank=rank, alpha=alpha, dropout=dropout)
+
+    # Print parameter info
+    total_params = sum(p.numel() for p in model.parameters())
+    trainable_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
+    print(f"Model loaded with {lora_type or 'no'} LoRA.")
+    print(f"Total parameters: {total_params}")
+    print(f"Trainable parameters: {trainable_params}")
 
     return model
