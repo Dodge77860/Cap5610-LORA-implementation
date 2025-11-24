@@ -35,37 +35,19 @@ for lora_type in LORA_TYPES:
         # Generate dummy input (random token IDs)
         x = torch.randint(0, VOCAB_SIZE, (BATCH_SIZE, SEQ_LEN), dtype=torch.long, device=DEVICE)
 
-        # ---- LoRA matrix norms before forward/backward ----
-        a_norm_before = sum(torch.norm(m.A).item() for m in model.modules() if hasattr(m, "A"))
-        b_norm_before = sum(torch.norm(m.B).item() for m in model.modules() if hasattr(m, "B"))
-
         # Forward pass
         output = model(x)
+        # Extract the last hidden states tensor
         hidden_states = output.last_hidden_state  # shape: (batch_size, seq_len, hidden_dim)
         loss = hidden_states.sum()
         loss.backward()
 
-        # ---- LoRA matrix norms after backward ----
-        a_norm_after = sum(torch.norm(m.A).item() for m in model.modules() if hasattr(m, "A"))
-        b_norm_after = sum(torch.norm(m.B).item() for m in model.modules() if hasattr(m, "B"))
-
-        # ---- Metrics ----
+        # Metrics
         total_params = sum(p.numel() for p in model.parameters())
         trainable_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
         grad_norm = torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1e6).item()
         output_mean = hidden_states.mean().item()
         output_std = hidden_states.std().item()
-
-        # ---- Merge / Unmerge Test ----
-        # Forward again after merging LoRA weights
-        for m in model.modules():
-            if hasattr(m, "merge_weights"):
-                m.merge_weights()
-        output_merged = model(x)
-        max_diff = (output_merged.last_hidden_state - hidden_states).abs().max().item()
-        for m in model.modules():
-            if hasattr(m, "unmerge_weights"):
-                m.unmerge_weights()
 
         results.append({
             "LoRA Type": lora_type,
@@ -74,12 +56,7 @@ for lora_type in LORA_TYPES:
             "Trainable Params": trainable_params,
             "Gradient Norm": grad_norm,
             "Output Mean": output_mean,
-            "Output Std": output_std,
-            "A Norm Before": a_norm_before,
-            "A Norm After": a_norm_after,
-            "B Norm Before": b_norm_before,
-            "B Norm After": b_norm_after,
-            "Merge Max Diff": max_diff
+            "Output Std": output_std
         })
 
         # Zero gradients before next iteration
@@ -128,32 +105,6 @@ plt.figure(figsize=(8,5))
 sns.lineplot(x="Rank", y="Output Std", hue="LoRA Type", marker="o", data=df)
 plt.title("Forward Output Std vs LoRA Rank")
 plt.ylabel("Output Std")
-plt.xlabel("LoRA Rank")
-plt.tight_layout()
-plt.show()
-
-# LoRA A/B norms
-plt.figure(figsize=(8,5))
-sns.barplot(x="Rank", y="A Norm After", hue="LoRA Type", data=df)
-plt.title("LoRA A Matrix Norm After Backward")
-plt.ylabel("Frobenius Norm")
-plt.xlabel("LoRA Rank")
-plt.tight_layout()
-plt.show()
-
-plt.figure(figsize=(8,5))
-sns.barplot(x="Rank", y="B Norm After", hue="LoRA Type", data=df)
-plt.title("LoRA B Matrix Norm After Backward")
-plt.ylabel("Frobenius Norm")
-plt.xlabel("LoRA Rank")
-plt.tight_layout()
-plt.show()
-
-# Merge / Unmerge difference
-plt.figure(figsize=(6,5))
-sns.scatterplot(x="Rank", y="Merge Max Diff", hue="LoRA Type", data=df, s=100)
-plt.title("Max Difference After LoRA Merge/Unmerge")
-plt.ylabel("Max |output_merged - output|")
 plt.xlabel("LoRA Rank")
 plt.tight_layout()
 plt.show()
