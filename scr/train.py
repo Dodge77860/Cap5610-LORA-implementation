@@ -16,7 +16,7 @@ from utils import count_trainable_params
 # -----------------------------
 # Configuration
 # -----------------------------
-LORA_TYPE = "partial"  # "partial" or "full"
+LORA_TYPE = "full"  # "partial" or "full"
 RANK = 4
 ALPHA = 16
 DROPOUT = 0.0
