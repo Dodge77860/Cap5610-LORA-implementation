@@ -36,7 +36,7 @@ pip install torch torchvision torchaudio matplotlib seaborn pandas
 ### Clone the Repository
 
 ```bash
-git clone https://github.com/<your-username>/lora-implementation.git
+git clone https://github.com/Dodge77860/Cap5610-LORA-implementation
 cd lora-implementation
 ```
 
