@@ -1,8 +1,6 @@
 # LoRA: From-Scratch Implementation in PyTorch
 
-This repository contains a from-scratch implementation of **Low-Rank Adaptation (LoRA)** for transformer models. The project focuses on understanding how low-rank updates interact with pre-trained transformers for efficient fine-tuning.
-
-The implementation avoids pre-built libraries (like Hugging Face PEFT) to provide full transparency into the algorithm.
+This repository contains a from-scratch implementation of **Low-Rank Adaptation (LoRA)** for transformer models, focusing on understanding how low-rank updates interact with pre-trained transformers for efficient fine-tuning. The implementation avoids pre-built libraries (like Hugging Face PEFT) to provide full transparency into the algorithm.
 
 ---
 
@@ -11,83 +9,43 @@ The implementation avoids pre-built libraries (like Hugging Face PEFT) to provid
 * Custom **LoRALinear** layers integrated into transformer attention modules.
 * Supports different LoRA ranks for experimentation.
 * Functional tests to verify forward and backward passes.
-* Visualization of trainable parameters, gradients, and forward outputs.
+* Visualizations of trainable parameters, gradients, and forward outputs.
 
 ---
 
 ## Setup
+Clone the repository and navigate to the source folder:
+git clone https://github.com/Dodge77860/Cap5610-LORA-implementation
+cd Cap5610-LORA-implementation/src
+
+To run the experiments locally, execute:
+
+python test_lora_vis.py
+
 
 ### Prerequisites
 
 * Python 3.10 or higher
-* GPU recommended (CUDA-enabled) for faster execution
-* Required packages:
+* GPU recommended (CUDA-enabled)
+* Install required packages:
 
 ```bash
 pip install torch torchvision torchaudio matplotlib seaborn pandas
-```
 
-### Optional Setup (Google Colab)
+## Source Code
+* `model.py` - transformer + LoRA
+* `test_lora_vis.py` - experiments and visualizations
 
-* If running on Colab, ensure GPU is enabled:
 
-  * `Runtime -> Change runtime type -> Hardware accelerator -> GPU`
+## Requirements
+List packages or link to requirements.txt
 
-### Clone the Repository
+## Data
+Synthetic token IDs used for testing; no external datasets required.
 
-```bash
-git clone https://github.com/Dodge77860/Cap5610-LORA-implementation
-cd lora-implementation
-```
-
-### Environment Verification
-
-To confirm everything is set up correctly, run:
-
-```bash
-python -c "import torch; print(torch.cuda.is_available())"
-```
-
-This should print `True` if a GPU is available.
-
----
-
-## Usage
-
-1. **Run experiments:**
-
-```bash
-python test_lora_vis.py
-```
-
-This will:
-
-* Initialize a small transformer (DistilBERT by default) with LoRA layers.
-* Test different LoRA ranks.
-* Collect metrics such as trainable parameters, gradient norms, and output statistics.
-* Generate visualizations comparing LoRA ranks.
-
----
+## Pretrained Models
+Uses pre-trained DistilBERT by default from Hugging Face.
 
 ## Results
+`test_lora_vis.py` reproduces metrics, visualizations, and key results.
 
-The `test_lora_vis.py` script produces:
-
-* **Bar chart** of total vs trainable parameters (log scale).
-* **Line plots** for gradient norms, output means, and output standard deviations across different LoRA ranks.
-
----
-
-## Project Goals
-
-* Understand the internal mechanics of LoRA in transformer models.
-* Validate forward and backward passes for low-rank updates.
-* Explore the effect of different ranks on trainable parameters and gradients.
-
----
-
-## References
-
-* Aghajanyan, A., et al. *“Low-Rank Adaptation of Large Language Models.”* 2020.
-
----
