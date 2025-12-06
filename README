@@ -33,8 +33,13 @@ python test_lora_vis.py
 pip install torch torchvision torchaudio matplotlib seaborn pandas
 
 ## Source Code
-* `model.py` - transformer + LoRA
-* `test_lora_vis.py` - experiments and visualizations
+* `model.py` - Transformer model with LoRA integration (used by all tests and training scripts).  
+* `FullLoRA.py` - Adds LoRA layers to **all** parts of the transformer, used for comprehensive testing.  
+* `PartialLoRA.py` - Adds LoRA layers to **some** of the transformer layers, for partial adaptation experiments.  
+* `test_lora.py` - Basic functional tests for the LoRA implementation, simplified version of `test_lora_vis.py`.  
+* `test_lora_vis.py` - Runs experiments and generates visualizations (parameter counts, gradients, output statistics) to analyze LoRA behavior.  
+* `train.py` - Trains the model on a dataset using the LoRA-enhanced transformer.  
+* `util.py` - Utility functions for dataset loading, parameter counting, and other helper operations. 
 
 
 ## Requirements
